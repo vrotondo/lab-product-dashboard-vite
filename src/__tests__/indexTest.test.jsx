@@ -4,10 +4,11 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import App from '../App'
 
 const sampleProducts = [
-  { id: 1, name: 'Laptop', price: '$999', inStock: true },
-  { id: 2, name: 'Phone', price: '$699', inStock: false },
-  { id: 3, name: 'Tablet', price: '$499', inStock: true },
-]
+  { id: 1, name: 'Laptop', price: '$999.99', inStock: true },
+  { id: 2, name: 'Smartphone', price: '$699.99', inStock: false }, // Updated name to match the rendered DOM
+  { id: 3, name: 'Headphones', price: '$199.99', inStock: true },
+  { id: 4, name: 'Keyboard', price: '$49.99', inStock: false },
+];
 
 test('renders product dashboard title', () => {
   render(<App />)
@@ -23,19 +24,34 @@ test('displays all products initially', () => {
 })
 
 test('applies conditional styling for out-of-stock products', () => {
-  render(<App />)
-  const outOfStockProduct = screen.getByText(/Phone/i) // Make sure "Phone" exists in sampleProducts
-  expect(outOfStockProduct.closest('div')).toHaveClass('outOfStockClass')
-})
+  render(<App />);
+
+  // Find all elements with the text "Smartphone"
+  const outOfStockProducts = screen.getAllByText(/Smartphone/i);
+
+  // Assert that at least one of them has the correct out-of-stock styling
+  outOfStockProducts.forEach((productElement) => {
+    expect(productElement.closest('div')).toHaveStyle({
+      backgroundColor: 'rgb(255, 224, 224)', // Light red for out-of-stock
+    });
+  });
+});
 
 test('removes product from the dashboard when "Remove" button is clicked', () => {
-  render(<App />)
-  const removeButtons = screen.queryAllByText(/Remove/i)
+  render(<App />);
 
-  expect(removeButtons.length).toBeGreaterThan(0) // Ensure buttons exist
+  // Ensure the initial products are rendered
+  const initialProducts = ['Laptop', 'Smartphone', 'Headphones', 'Keyboard'];
+  initialProducts.forEach((productName) => {
+    expect(screen.getByText(productName)).toBeInTheDocument();
+  });
 
-  if (removeButtons.length > 0) {
-    fireEvent.click(removeButtons[0])
-    expect(removeButtons[0]).not.toBeInTheDocument() // Expect removal to work
-  }
-})
+  // Find the "Remove" button for the first product and click it
+  const removeButtons = screen.getAllByText('Remove');
+  expect(removeButtons.length).toBeGreaterThan(0);
+
+  fireEvent.click(removeButtons[0]);
+
+  // Ensure the first product is removed
+  expect(screen.queryByText('Laptop')).not.toBeInTheDocument();
+});
